@@ -24,7 +24,7 @@
 #define M_OC 18
 #define OC_ADJ 21
 
-BLDCMotor motor = BLDCMotor(10,1.5);
+BLDCMotor motor = BLDCMotor(20,0.2);
 BLDCDriver3PWM driver = BLDCDriver3PWM(INH_A, INH_B, INH_C, EN_GATE);
 
 
@@ -70,7 +70,7 @@ void setup()
   motor.PID_velocity.I = 10;
   // default voltage_power_supply
 
-  motor.voltage_limit = 35;
+  motor.voltage_limit = 31;
 
   // velocity low pass filtering time constant
   motor.LPF_velocity.Tf = 0.01f;
