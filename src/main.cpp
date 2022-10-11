@@ -12,7 +12,7 @@
 #define M_OC 18
 #define OC_ADJ 21
 
-BLDCMotor motor = BLDCMotor(10,0.5);
+BLDCMotor motor = BLDCMotor(50,1.5);
 BLDCDriver3PWM driver = BLDCDriver3PWM(INH_A, INH_B, INH_C, EN_GATE);
 
 
