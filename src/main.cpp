@@ -1,12 +1,12 @@
 #include <SimpleFOC.h>
-HallSensor sensor = HallSensor(32, 35, 34, 10);
+HallSensor sensor = HallSensor(32, 35, 34, 50);
 void doA() { sensor.handleA(); }
 void doB() { sensor.handleB(); }
 void doC() { sensor.handleC(); }
 
 void setup() {
   Serial.begin(115200);
-  sensor.pullup = Pullup::USE_INTERN;
+  sensor.pullup = Pullup::USE_EXTERN;
   sensor.init();
   sensor.enableInterrupts(doA, doB, doC);
   Serial.println("Sensor ready");
