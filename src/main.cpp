@@ -1,6 +1,6 @@
 
 #include <SimpleFOC.h>
-#define THROTTLE_PIN    33
+#define THROTTLE_PIN 33
 // DRV8302 pins connections
 // don't forget to connect the common ground pin
 #define INH_A 25
@@ -12,17 +12,59 @@
 #define M_OC 18
 #define OC_ADJ 21
 
-BLDCMotor motor = BLDCMotor(50,1.5);
+// Motor instance
+BLDCMotor motor = BLDCMotor(50, 4);
 BLDCDriver3PWM driver = BLDCDriver3PWM(INH_A, INH_B, INH_C, EN_GATE);
 
+// SENSOR
+// HallSensor sensor = HallSensor(32, 35, 34, 13);
+HallSensor sensor = HallSensor(32, 35, 34, 50);
+void doA() { sensor.handleA(); }
+void doB() { sensor.handleB(); }
+void doC() { sensor.handleC(); }
 
 // commander interface
 Commander command = Commander(Serial);
 void onMotor(char *cmd) { command.motor(&motor, cmd); }
 
+xTaskHandle taskBlinkHandle;
+int counter = 0;
+void taskBlink(void *parameter)
+{
+  for (;;)
+  {
+    // /*place your rtos code here*/
+    // if(counter > 8){
+    //   counter = 0;
+    // }
+    for (int i = 0; i < 30; i++)
+    {
+      Serial.println(counter++);
+      motor.target = counter;
+      vTaskDelay(300 / portTICK_PERIOD_MS);
+    }
+    for (int i = 30; i > 0; i--)
+    {
+      Serial.println(counter--);
+      motor.target = counter;
+      vTaskDelay(300 / portTICK_PERIOD_MS);
+    }
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
+  // initialize encoder sensor hardware
+  sensor.pullup = Pullup::USE_INTERN;
+  sensor.init();
+  sensor.enableInterrupts(doA, doB, doC);
+  Serial.println("Sensor ready");
+  _delay(1000);
+
+  // link the motor to the sensor
+  motor.linkSensor(&sensor);
+
   // DRV8302 specific code
   // M_OC  - enable overcurrent protection
   pinMode(M_OC, OUTPUT);
@@ -42,7 +84,7 @@ void setup()
   // link the motor and the driver
   motor.linkDriver(&driver);
   motor.voltage_sensor_align = 15;
-  motor.velocity_index_search = 10;
+  motor.velocity_index_search = 5;
   // motor.phase_resistance = 0.0;
 
   // choose FOC modulation
@@ -56,6 +98,7 @@ void setup()
   motor.PID_velocity.P = 0.2f;
   motor.PID_velocity.I = 10;
   // default voltage_power_supply
+
   motor.voltage_limit = 35;
 
   // velocity low pass filtering time constant
@@ -75,7 +118,7 @@ void setup()
   // initialise motor
   motor.init();
   // align encoder and start FOC
-  // motor.initFOC();
+  motor.initFOC();
 
   // set the inital target value
   // motor.target = 2;
@@ -89,18 +132,20 @@ void setup()
   Serial.println(F("Initial target voltage 2V."));
 
   _delay(1000);
+  // Serial.println("RTOS app begin");
+  // xTaskCreate(taskBlink, "task blink", 4000, NULL, 1, NULL);
 }
 int throttle_value = 0;
 void loop()
 {
 
   // throttle_value = analogRead(THROTTLE_PIN);
-  
+
   // throttle_value = map(throttle_value, 1000, 4095, 0,10);
-  // // motor.target = throttle_value;
+
   // Serial.println("raw:"+String(throttle_value));
-  // // iterative setting FOC phase voltage
-  // motor.loopFOC();
+  // iterative setting FOC phase voltage
+  motor.loopFOC();
 
   // iterative function setting the outter loop target
   // velocity, position or voltage
