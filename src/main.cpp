@@ -1,4 +1,16 @@
-
+/**
+ * Comprehensive BLDC motor control example using encoder and the DRV8302 board
+ *
+ * Using serial terminal user can send motor commands and configure the motor and FOC in real-time:
+ * - configure PID controller constants
+ * - change motion control loops
+ * - monitor motor variabels
+ * - set target values
+ * - check all the configuration values
+ *
+ * check the https://docs.simplefoc.com for full list of motor commands
+ *
+ */
 #include <SimpleFOC.h>
 #define THROTTLE_PIN    33
 // DRV8302 pins connections
@@ -12,7 +24,7 @@
 #define M_OC 18
 #define OC_ADJ 21
 
-BLDCMotor motor = BLDCMotor(10,0.5);
+BLDCMotor motor = BLDCMotor(10,2.2);
 BLDCDriver3PWM driver = BLDCDriver3PWM(INH_A, INH_B, INH_C, EN_GATE);
 
 
@@ -23,6 +35,7 @@ void onMotor(char *cmd) { command.motor(&motor, cmd); }
 void setup()
 {
   Serial.begin(115200);
+
   // DRV8302 specific code
   // M_OC  - enable overcurrent protection
   pinMode(M_OC, OUTPUT);
@@ -49,13 +62,14 @@ void setup()
   motor.foc_modulation = FOCModulationType::SinePWM;
 
   // set control loop type to be used
-  motor.controller = MotionControlType::torque;
+  motor.controller = MotionControlType::velocity_openloop;
   // motor.controller = MotionControlType::velocity;
 
   // contoller configuration based on the controll type
   motor.PID_velocity.P = 0.2f;
   motor.PID_velocity.I = 10;
   // default voltage_power_supply
+
   motor.voltage_limit = 35;
 
   // velocity low pass filtering time constant
@@ -75,7 +89,7 @@ void setup()
   // initialise motor
   motor.init();
   // align encoder and start FOC
-  // motor.initFOC();
+  motor.initFOC();
 
   // set the inital target value
   // motor.target = 2;
@@ -88,7 +102,6 @@ void setup()
   Serial.println(F("Initial motion control loop is voltage loop."));
   Serial.println(F("Initial target voltage 2V."));
 
-  _delay(1000);
 }
 int throttle_value = 0;
 void loop()
